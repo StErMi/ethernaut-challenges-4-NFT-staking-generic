@@ -54,7 +54,7 @@ contract NFTStaking is ERC721Holder {
         address source,
         uint256 tokenId,
         uint256 months
-    ) public returns (uint256 lockId) {
+    ) external returns (uint256 lockId) {
         _lockIds.increment();
 
         uint256 currentId = _lockIds.current();
@@ -88,7 +88,7 @@ contract NFTStaking is ERC721Holder {
         return currentId;
     }
 
-    function unstake(uint256 lockId) public {
+    function unstake(uint256 lockId) external {
         NFTLock storage nftLock = locks[lockId];
 
         require(nftLock.source != address(0), "stake record not existing or already redeemed");
