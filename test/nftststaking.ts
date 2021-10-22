@@ -115,6 +115,17 @@ describe('NFTStake Contract', () => {
           .add(TOKEN_PER_DAY.mul(PERIOD_IN_DAYS).mul(secondPeriodInMonths)),
       );
     });
+
+    it('Stake emit NFTStaked', async () => {
+      const stakePeriodInMonth = 2;
+      await genericNFT.connect(addr1).mint();
+      // stake nft 1 for 1 month
+      await genericNFT.connect(addr1).approve(nftStaking.address, 1);
+      const stakeTx = nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
+
+      // check event emitted
+      await expect(stakeTx).to.emit(nftStaking, 'NFTStaked');
+    });
   });
 
   describe('Test NFT transfer', () => {
@@ -216,9 +227,26 @@ describe('NFTStake Contract', () => {
       // unstake it
       await nftStaking.connect(addr1).unstake(1);
 
-      // unstake it again
+      // check ownership
       const nftOwner = await genericNFT.ownerOf(1);
       expect(nftOwner).to.equal(addr1.address);
+    });
+
+    it('unstake emit NFTUnstaked ', async () => {
+      const stakePeriodInMonth = 2;
+      await genericNFT.connect(addr1).mint();
+
+      // stake nft 1 for 1 month
+      await genericNFT.connect(addr1).approve(nftStaking.address, 1);
+      await nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
+
+      await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
+
+      // unstake it
+      const unstakeTx = nftStaking.connect(addr1).unstake(1);
+
+      // check event emitted
+      await expect(unstakeTx).to.emit(nftStaking, 'NFTUnstaked');
     });
   });
 });

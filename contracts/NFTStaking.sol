@@ -39,7 +39,14 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
     mapping(uint256 => NFTLock) private locks;
 
     /// @notice NFTLocked event
-    event NFTLocked(address indexed sender, uint256 tokenID, uint256 unlockTimestamp, uint256 tokenAmount);
+    event NFTStaked(
+        address indexed sender,
+        address indexed source,
+        uint256 indexed tokenID,
+        uint256 unlockTimestamp,
+        uint256 tokenAmount
+    );
+    event NFTUnstaked(address indexed sender, address indexed source, uint256 indexed tokenID);
 
     constructor(address tokenRewardAddress) {
         token = TokenReward(tokenRewardAddress);
@@ -78,7 +85,7 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
         token.mintReward(msg.sender, tokenAmount);
 
         // emit event
-        emit NFTLocked(msg.sender, tokenId, unlockTimestamp, tokenAmount);
+        emit NFTStaked(msg.sender, source, tokenId, unlockTimestamp, tokenAmount);
 
         return currentId;
     }
@@ -101,5 +108,8 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
         // The NFT will be anyway sent to the nftLock.owner
 
         IERC721(nftSource).safeTransferFrom(address(this), nftOwner, nftTokenId);
+
+        // emit event
+        emit NFTUnstaked(msg.sender, nftSource, nftTokenId);
     }
 }
