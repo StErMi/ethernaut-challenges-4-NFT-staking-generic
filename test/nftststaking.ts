@@ -11,6 +11,7 @@ import GenericNFTArtifact from '../artifacts/contracts/GenericNFT.sol/GenericNFT
 import {GenericNFT} from '../typechain/GenericNFT';
 
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
+import {BigNumber} from '@ethersproject/bignumber';
 
 const {deployContract} = waffle;
 const {expect} = chai;
@@ -24,7 +25,8 @@ const increaseWorldTimeInSeconds = async (seconds: number, mine = false) => {
 };
 
 const SECOND_IN_MONTH = 60 * 60 * 24 * 31;
-const TOKEN_PER_MONTH = ethers.utils.parseEther('100');
+const PERIOD_IN_DAYS = BigNumber.from(31);
+const TOKEN_PER_DAY = ethers.utils.parseEther('3');
 
 describe('NFTStake Contract', () => {
   let owner: SignerWithAddress;
@@ -81,7 +83,7 @@ describe('NFTStake Contract', () => {
       expect(nftOwner).to.equal(nftStaking.address);
       // check token balance
       const balance = await tokenReward.balanceOf(addr1.address);
-      expect(balance).to.equal(TOKEN_PER_MONTH.mul(stakePeriodInMonth));
+      expect(balance).to.equal(TOKEN_PER_DAY.mul(PERIOD_IN_DAYS).mul(stakePeriodInMonth));
     });
     it('Create a stake after time unlocked', async () => {
       const stakePeriodInMonth = 2;
@@ -107,7 +109,11 @@ describe('NFTStake Contract', () => {
 
       // check token balance
       const balance = await tokenReward.balanceOf(addr1.address);
-      expect(balance).to.equal(TOKEN_PER_MONTH.mul(stakePeriodInMonth).add(TOKEN_PER_MONTH.mul(secondPeriodInMonths)));
+      expect(balance).to.equal(
+        TOKEN_PER_DAY.mul(PERIOD_IN_DAYS)
+          .mul(stakePeriodInMonth)
+          .add(TOKEN_PER_DAY.mul(PERIOD_IN_DAYS).mul(secondPeriodInMonths)),
+      );
     });
   });
 

@@ -29,9 +29,10 @@ contract NFTStaking is ERC721Holder {
     TokenReward public token;
 
     /// @notice Amount of tokens to reward the user for each month of lock
-    uint256 constant TOKEN_REWARD_PER_PERIOD = 100 ether;
+    uint256 constant TOKEN_REWARD_PER_DAY = 3 ether;
 
-    uint256 constant STAKE_BASE_PERIOD = 31 days;
+    uint256 constant STAKE_BASE_DAYS = 31;
+    uint256 constant STAKE_BASE_PERIOD = 1 days;
 
     /// @notice Mapping to track nft locks
     mapping(uint256 => NFTLock) private locks;
@@ -72,15 +73,15 @@ contract NFTStaking is ERC721Holder {
         NFTLock storage nftLock = locks[currentId];
 
         // Create a stake of the NFT and lock it
-        uint256 unlockTimestamp = block.timestamp + (STAKE_BASE_PERIOD * months);
+        uint256 unlockTimestamp = block.timestamp + (STAKE_BASE_PERIOD * STAKE_BASE_DAYS * months);
         nftLock.source = source;
         nftLock.tokenId = tokenId;
         nftLock.owner = msg.sender;
         nftLock.unlockTimestamp = unlockTimestamp;
 
         // Mint the reward
-        uint256 tokenAmount = TOKEN_REWARD_PER_PERIOD * months;
-        token.mintReward(msg.sender, TOKEN_REWARD_PER_PERIOD * months);
+        uint256 tokenAmount = TOKEN_REWARD_PER_DAY * STAKE_BASE_DAYS * months;
+        token.mintReward(msg.sender, tokenAmount);
 
         // emit event
         emit NFTLocked(msg.sender, tokenId, unlockTimestamp, tokenAmount);
