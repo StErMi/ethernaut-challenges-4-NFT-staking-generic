@@ -156,6 +156,20 @@ describe('NFTStake Contract', () => {
       const unstakeTx = nftStaking.connect(addr1).unstake(1);
       await expect(unstakeTx).to.be.revertedWith('stake record not existing or already redeemed');
     });
+    it("unstake stake you don't own", async () => {
+      const stakePeriodInMonth = 2;
+      await genericNFT.connect(addr1).mint();
+
+      // stake nft 1 for 1 month
+      await genericNFT.connect(addr1).approve(nftStaking.address, 1);
+      await nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
+
+      await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
+
+      // unstake it
+      const unstakeTx = nftStaking.connect(addr2).unstake(1);
+      await expect(unstakeTx).to.be.revertedWith('only stake owner can unstake');
+    });
 
     it('unstake already redeemed stake', async () => {
       const stakePeriodInMonth = 2;

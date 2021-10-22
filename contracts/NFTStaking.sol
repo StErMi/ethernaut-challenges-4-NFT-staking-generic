@@ -93,6 +93,7 @@ contract NFTStaking is ERC721Holder {
         NFTLock storage nftLock = locks[lockId];
 
         require(nftLock.source != address(0), "stake record not existing or already redeemed");
+        require(nftLock.owner == msg.sender, "only stake owner can unstake");
         require(nftLock.unlockTimestamp < block.timestamp, "nft is still locked");
 
         address nftSource = nftLock.source;
