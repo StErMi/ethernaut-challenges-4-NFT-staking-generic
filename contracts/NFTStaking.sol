@@ -62,13 +62,6 @@ contract NFTStaking is ERC721Holder {
 
         IERC721(source).safeTransferFrom(msg.sender, address(this), tokenId);
 
-        // We need to transfer the NFT to our contract
-        // (bool success, bytes memory data) = source.call(
-        //     abi.encodeWithSignature("safeTransferFrom(address, address, uint256)", msg.sender, address(this), tokenId)
-        // );
-
-        // require(success, "Error while transferring NFT from source to staking contract");
-
         // I don't need to check if it's already staked because if it's staked the contract is the owner of the NFT
         NFTLock storage nftLock = locks[currentId];
 
@@ -107,10 +100,5 @@ contract NFTStaking is ERC721Holder {
         // The NFT will be anyway sent to the nftLock.owner
 
         IERC721(nftSource).safeTransferFrom(address(this), nftOwner, nftTokenId);
-        // (bool success, ) = nftLock.source.call(
-        //     abi.encodeWithSignature("safeTransferFrom(address, address, uint256)", address(this), nftOwner, nftTokenId)
-        // );
-
-        // require(success, "Error while transferring NFT from stake contract to prev owner");
     }
 }
