@@ -6,6 +6,7 @@ import "./TokenReward.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @notice Struct to track NFT lock mechanism
 struct NFTLock {
@@ -19,7 +20,7 @@ struct NFTLock {
  @title A contract to set a World Purpose
  @author Emanuele Ricci @StErMi
 */
-contract NFTStaking is ERC721Holder {
+contract NFTStaking is ERC721Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     /// @notice utility to track staked NFT
@@ -55,7 +56,7 @@ contract NFTStaking is ERC721Holder {
         address source,
         uint256 tokenId,
         uint256 months
-    ) external returns (uint256 lockId) {
+    ) external nonReentrant returns (uint256 lockId) {
         _lockIds.increment();
 
         uint256 currentId = _lockIds.current();
@@ -82,7 +83,7 @@ contract NFTStaking is ERC721Holder {
         return currentId;
     }
 
-    function unstake(uint256 lockId) external {
+    function unstake(uint256 lockId) external nonReentrant {
         NFTLock storage nftLock = locks[lockId];
 
         require(nftLock.source != address(0), "stake record not existing or already redeemed");
