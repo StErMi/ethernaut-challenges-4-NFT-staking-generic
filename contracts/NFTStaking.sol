@@ -80,6 +80,7 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
     */
     function grantWhitelist(address nftContract) external onlyOwner {
         whitelistNFTs[nftContract] = true;
+        emit GrantNFTWhitelist(nftContract);
     }
 
     /**
@@ -88,6 +89,7 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
     */
     function revokeWhitelist(address nftContract) external onlyOwner {
         whitelistNFTs[nftContract] = false;
+        emit RevokeNFTWhitelist(nftContract);
     }
 
     /**
