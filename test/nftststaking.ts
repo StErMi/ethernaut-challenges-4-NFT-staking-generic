@@ -49,6 +49,28 @@ describe('NFTStake Contract', () => {
     await tokenReward.transferOwnership(nftStaking.address);
   });
 
+  describe('Test whitelisting', () => {
+    it('Only owner can grantWhitelist', async () => {
+      const tx = nftStaking.connect(addr1).grantWhitelist(genericNFT.address);
+      await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('Only owner can revokeWhitelist', async () => {
+      const tx = nftStaking.connect(addr1).revokeWhitelist(genericNFT.address);
+      await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('Test isWhitelisted', async () => {
+      const notWhitelistedNFT = (await deployContract(addr3, GenericNFTArtifact)) as GenericNFT;
+      let whitelisted = await nftStaking.connect(addr1).isWhitelisted(notWhitelistedNFT.address);
+      expect(whitelisted).to.be.equal(false);
+
+      await nftStaking.connect(owner).grantWhitelist(notWhitelistedNFT.address);
+      whitelisted = await nftStaking.connect(addr1).isWhitelisted(notWhitelistedNFT.address);
+      expect(whitelisted).to.be.equal(true);
+    });
+  });
+
   describe('Test stake', () => {
     it('Stake non whitelisted NFT', async () => {
       const stakePeriodInMonth = 2;

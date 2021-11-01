@@ -31,7 +31,7 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
     TokenReward public token;
 
     /// @notice Whitelist of NFT tokens accepted
-    mapping(address => bool) whitelistNFTs;
+    mapping(address => bool) private whitelistNFTs;
 
     /// @notice Amount of tokens to reward the user for each month of lock
     uint256 constant TOKEN_REWARD_PER_DAY = 3 ether;
@@ -72,6 +72,15 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
         require(whitelisted, "Contract is not whitelisted");
 
         _;
+    }
+
+    /**
+     @notice Check if contract is whitelisted
+     @param nftContract The NFT contract 
+     @return if the nft contract is whitelisted
+    */
+    function isWhitelisted(address nftContract) external view returns (bool) {
+        return whitelistNFTs[nftContract];
     }
 
     /**
