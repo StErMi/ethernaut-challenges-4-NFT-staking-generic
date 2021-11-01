@@ -136,7 +136,7 @@ describe('NFTStake Contract', () => {
       await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
 
       // unstake it
-      await nftStaking.connect(addr1).unstake(1);
+      await nftStaking.connect(addr1).unstake(genericNFT.address, 1);
 
       const secondPeriodInMonths = 3;
       await genericNFT.connect(addr1).approve(nftStaking.address, 1);
@@ -191,7 +191,7 @@ describe('NFTStake Contract', () => {
       await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
 
       // unstake it
-      await nftStaking.connect(addr1).unstake(1);
+      await nftStaking.connect(addr1).unstake(genericNFT.address, 1);
 
       // transfer it
       await genericNFT.connect(addr1).transferFrom(addr1.address, addr2.address, 1);
@@ -203,7 +203,7 @@ describe('NFTStake Contract', () => {
 
   describe('Test unstake', () => {
     it('unstake unexisting stake record', async () => {
-      const unstakeTx = nftStaking.connect(addr1).unstake(1);
+      const unstakeTx = nftStaking.connect(addr1).unstake(genericNFT.address, 1);
       await expect(unstakeTx).to.be.revertedWith('stake record not existing or already redeemed');
     });
     it("unstake stake you don't own", async () => {
@@ -217,7 +217,7 @@ describe('NFTStake Contract', () => {
       await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
 
       // unstake it
-      const unstakeTx = nftStaking.connect(addr2).unstake(1);
+      const unstakeTx = nftStaking.connect(addr2).unstake(genericNFT.address, 1);
       await expect(unstakeTx).to.be.revertedWith('only stake owner can unstake');
     });
 
@@ -232,10 +232,10 @@ describe('NFTStake Contract', () => {
       await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
 
       // unstake it
-      await nftStaking.connect(addr1).unstake(1);
+      await nftStaking.connect(addr1).unstake(genericNFT.address, 1);
 
       // unstake it again
-      const unstakeTx = nftStaking.connect(addr1).unstake(1);
+      const unstakeTx = nftStaking.connect(addr1).unstake(genericNFT.address, 1);
       await expect(unstakeTx).to.be.revertedWith('stake record not existing or already redeemed');
     });
 
@@ -248,7 +248,7 @@ describe('NFTStake Contract', () => {
       await nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
 
       // unstake it before lock period expired
-      const unstakeTx = nftStaking.connect(addr1).unstake(1);
+      const unstakeTx = nftStaking.connect(addr1).unstake(genericNFT.address, 1);
 
       await expect(unstakeTx).to.be.revertedWith('nft is still locked');
     });
@@ -264,7 +264,7 @@ describe('NFTStake Contract', () => {
       await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
 
       // unstake it
-      await nftStaking.connect(addr1).unstake(1);
+      await nftStaking.connect(addr1).unstake(genericNFT.address, 1);
 
       // check ownership
       const nftOwner = await genericNFT.ownerOf(1);
@@ -282,7 +282,7 @@ describe('NFTStake Contract', () => {
       await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
 
       // unstake it
-      const unstakeTx = nftStaking.connect(addr1).unstake(1);
+      const unstakeTx = nftStaking.connect(addr1).unstake(genericNFT.address, 1);
 
       // check event emitted
       await expect(unstakeTx).to.emit(nftStaking, 'NFTUnstaked');

@@ -24,9 +24,6 @@ struct NFTLock {
 contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
 
-    /// @notice utility to track staked NFT
-    Counters.Counter private _lockIds;
-
     /// @notice TokenReward contract
     TokenReward public token;
 
@@ -40,7 +37,7 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
     uint256 constant STAKE_BASE_PERIOD = 1 days;
 
     /// @notice Mapping to track nft locks
-    mapping(uint256 => NFTLock) private locks;
+    mapping(bytes32 => NFTLock) private locks;
 
     /// @notice NFTStaked event
     event NFTStaked(
@@ -112,10 +109,8 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
         address source,
         uint256 tokenId,
         uint256 months
-    ) external onlyWhitelisted(source) nonReentrant returns (uint256 lockId) {
-        _lockIds.increment();
-
-        uint256 currentId = _lockIds.current();
+    ) external onlyWhitelisted(source) nonReentrant returns (bytes32 lockId) {
+        bytes32 currentId = generateLockHashID(source, tokenId);
 
         IERC721(source).safeTransferFrom(msg.sender, address(this), tokenId);
 
@@ -139,8 +134,9 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
         return currentId;
     }
 
-    function unstake(uint256 lockId) external nonReentrant {
-        NFTLock storage nftLock = locks[lockId];
+    function unstake(address source, uint256 tokenId) external nonReentrant {
+        bytes32 currentId = generateLockHashID(source, tokenId);
+        NFTLock storage nftLock = locks[currentId];
 
         require(nftLock.source != address(0), "stake record not existing or already redeemed");
         require(nftLock.owner == msg.sender, "only stake owner can unstake");
@@ -151,7 +147,7 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
         uint256 nftTokenId = nftLock.tokenId;
 
         // reset the stake mapping
-        delete locks[lockId];
+        delete locks[currentId];
 
         // Not checking that the msg.sender == owner because anyone could unstake it
         // The NFT will be anyway sent to the nftLock.owner
@@ -160,5 +156,15 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
 
         // emit event
         emit NFTUnstaked(msg.sender, nftSource, nftTokenId);
+    }
+
+    /**
+     @notice Generate the lock hash id based on source and tokenId
+     @param source The NFT contract
+     @param tokenId The NFT tokenId
+     @return the unique id for the couple source and tokenId
+    */
+    function generateLockHashID(address source, uint256 tokenId) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(source, "#", tokenId));
     }
 }
