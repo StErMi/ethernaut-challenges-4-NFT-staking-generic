@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice Struct to track NFT lock mechanism
 struct NFTLock {
@@ -20,7 +21,7 @@ struct NFTLock {
  @title A contract to set a World Purpose
  @author Emanuele Ricci @StErMi
 */
-contract NFTStaking is ERC721Holder, ReentrancyGuard {
+contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     /// @notice utility to track staked NFT
@@ -28,6 +29,9 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
 
     /// @notice TokenReward contract
     TokenReward public token;
+
+    /// @notice Whitelist of NFT tokens accepted
+    mapping(address => bool) whitelistNFTs;
 
     /// @notice Amount of tokens to reward the user for each month of lock
     uint256 constant TOKEN_REWARD_PER_DAY = 3 ether;
@@ -38,7 +42,7 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
     /// @notice Mapping to track nft locks
     mapping(uint256 => NFTLock) private locks;
 
-    /// @notice NFTLocked event
+    /// @notice NFTStaked event
     event NFTStaked(
         address indexed sender,
         address indexed source,
@@ -46,10 +50,44 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
         uint256 unlockTimestamp,
         uint256 tokenAmount
     );
+    /// @notice NFTUnstaked event
     event NFTUnstaked(address indexed sender, address indexed source, uint256 indexed tokenID);
+
+    /// @notice GrantNFTWhitelist event
+    event GrantNFTWhitelist(address indexed nftContract);
+
+    /// @notice RevokeNFTWhitelist event
+    event RevokeNFTWhitelist(address indexed nftContract);
 
     constructor(address tokenRewardAddress) {
         token = TokenReward(tokenRewardAddress);
+    }
+
+    /**
+     @notice Check if an nftContract is whitelisted
+     @param nftContract The NFT contract to check if whitelisted
+    */
+    modifier onlyWhitelisted(address nftContract) {
+        bool whitelisted = whitelistNFTs[nftContract];
+        require(whitelisted, "Contract is not whitelisted");
+
+        _;
+    }
+
+    /**
+     @notice Grant whitelist to an NFT contract
+     @param nftContract The NFT contract to grant whitelist
+    */
+    function grantWhitelist(address nftContract) external onlyOwner {
+        whitelistNFTs[nftContract] = true;
+    }
+
+    /**
+     @notice Revoke whitelist to an NFT contract
+     @param nftContract The NFT contract to revoke whitelist
+    */
+    function revokeWhitelist(address nftContract) external onlyOwner {
+        whitelistNFTs[nftContract] = false;
     }
 
     /**
@@ -63,7 +101,7 @@ contract NFTStaking is ERC721Holder, ReentrancyGuard {
         address source,
         uint256 tokenId,
         uint256 months
-    ) external nonReentrant returns (uint256 lockId) {
+    ) external onlyWhitelisted(source) nonReentrant returns (uint256 lockId) {
         _lockIds.increment();
 
         uint256 currentId = _lockIds.current();

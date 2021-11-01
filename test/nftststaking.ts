@@ -45,10 +45,27 @@ describe('NFTStake Contract', () => {
     genericNFT = (await deployContract(owner, GenericNFTArtifact)) as GenericNFT;
     tokenReward = (await deployContract(owner, TokenRewardArtifact)) as TokenReward;
     nftStaking = (await deployContract(owner, NFTStakingArtifact, [tokenReward.address])) as NFTStaking;
+    await nftStaking.grantWhitelist(genericNFT.address);
     await tokenReward.transferOwnership(nftStaking.address);
   });
 
   describe('Test stake', () => {
+    it('Stake non whitelisted NFT', async () => {
+      const stakePeriodInMonth = 2;
+      const notWhitelistedNFT = (await deployContract(addr3, GenericNFTArtifact)) as GenericNFT;
+      await notWhitelistedNFT.connect(addr1).mint();
+      await notWhitelistedNFT.connect(addr1).approve(nftStaking.address, 1);
+      const stakeTx = nftStaking.connect(addr1).stake(notWhitelistedNFT.address, 1, stakePeriodInMonth);
+      await expect(stakeTx).to.be.revertedWith('Contract is not whitelisted');
+    });
+    it('Stake NFT that has been revoked from whitelist', async () => {
+      const stakePeriodInMonth = 2;
+      await nftStaking.connect(owner).revokeWhitelist(genericNFT.address);
+      await genericNFT.connect(addr1).mint();
+      await genericNFT.connect(addr1).approve(nftStaking.address, 1);
+      const stakeTx = nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
+      await expect(stakeTx).to.be.revertedWith('Contract is not whitelisted');
+    });
     it('Stake unexisting token', async () => {
       const stakePeriodInMonth = 2;
       const stakeTx = nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
