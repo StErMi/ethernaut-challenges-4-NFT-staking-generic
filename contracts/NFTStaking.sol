@@ -164,7 +164,7 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
      @param tokenId The NFT tokenId
      @return the unique id for the couple source and tokenId
     */
-    function generateLockHashID(address source, uint256 tokenId) public pure returns (bytes32) {
+    function generateLockHashID(address source, uint256 tokenId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(source, "#", tokenId));
     }
 }
