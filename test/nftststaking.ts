@@ -69,6 +69,19 @@ describe('NFTStake Contract', () => {
       whitelisted = await nftStaking.connect(addr1).isWhitelisted(notWhitelistedNFT.address);
       expect(whitelisted).to.be.equal(true);
     });
+
+    it('Test GrantNFTWhitelist event', async () => {
+      const notWhitelistedNFT = (await deployContract(addr3, GenericNFTArtifact)) as GenericNFT;
+      const tx = nftStaking.connect(owner).grantWhitelist(notWhitelistedNFT.address);
+      await expect(tx).to.emit(nftStaking, 'GrantNFTWhitelist').withArgs(notWhitelistedNFT.address);
+    });
+
+    it('Test RevokeNFTWhitelist event', async () => {
+      const notWhitelistedNFT = (await deployContract(addr3, GenericNFTArtifact)) as GenericNFT;
+      await nftStaking.connect(owner).grantWhitelist(notWhitelistedNFT.address);
+      const tx = nftStaking.connect(owner).revokeWhitelist(notWhitelistedNFT.address);
+      await expect(tx).to.emit(nftStaking, 'RevokeNFTWhitelist').withArgs(notWhitelistedNFT.address);
+    });
   });
 
   describe('Test stake', () => {
@@ -164,6 +177,36 @@ describe('NFTStake Contract', () => {
 
       // check event emitted
       await expect(stakeTx).to.emit(nftStaking, 'NFTStaked');
+    });
+  });
+
+  describe('Test isReadyToUnstake', () => {
+    it('isReadyToUnstake return false', async () => {
+      const stakePeriodInMonth = 2;
+      await genericNFT.connect(addr1).mint();
+
+      // stake nft 1 for 1 month
+      await genericNFT.connect(addr1).approve(nftStaking.address, 1);
+      await nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
+
+      const isReady = await nftStaking.connect(addr1).isReadyToUnstake(genericNFT.address, 1);
+
+      expect(isReady).to.be.equal(false);
+    });
+
+    it('isReadyToUnstake return false', async () => {
+      const stakePeriodInMonth = 2;
+      await genericNFT.connect(addr1).mint();
+
+      // stake nft 1 for 1 month
+      await genericNFT.connect(addr1).approve(nftStaking.address, 1);
+      await nftStaking.connect(addr1).stake(genericNFT.address, 1, stakePeriodInMonth);
+
+      await increaseWorldTimeInSeconds(SECOND_IN_MONTH * stakePeriodInMonth, true);
+
+      const isReady = await nftStaking.connect(addr1).isReadyToUnstake(genericNFT.address, 1);
+
+      expect(isReady).to.be.equal(true);
     });
   });
 

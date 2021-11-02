@@ -134,13 +134,27 @@ contract NFTStaking is Ownable, ERC721Holder, ReentrancyGuard {
         return currentId;
     }
 
+    /**
+     @notice Check if the NFT can be unstaked
+     @param source The NFT contract
+     @param tokenId The NFT tokenId
+     @return True if the user can unstake it
+    */
+    function isReadyToUnstake(address source, uint256 tokenId) external view returns (bool) {
+        bytes32 currentId = generateLockHashID(source, tokenId);
+        NFTLock storage nftLock = locks[currentId];
+
+        require(nftLock.source != address(0), "stake record not existing or already redeemed");
+        return nftLock.unlockTimestamp <= block.timestamp;
+    }
+
     function unstake(address source, uint256 tokenId) external nonReentrant {
         bytes32 currentId = generateLockHashID(source, tokenId);
         NFTLock storage nftLock = locks[currentId];
 
         require(nftLock.source != address(0), "stake record not existing or already redeemed");
         require(nftLock.owner == msg.sender, "only stake owner can unstake");
-        require(nftLock.unlockTimestamp < block.timestamp, "nft is still locked");
+        require(nftLock.unlockTimestamp <= block.timestamp, "nft is still locked");
 
         address nftSource = nftLock.source;
         address nftOwner = nftLock.owner;
